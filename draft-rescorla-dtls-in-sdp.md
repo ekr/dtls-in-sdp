@@ -38,7 +38,7 @@ a DTLS {{!RFC6347}} handshake to establish keys which
 are then used to key SRTP {{!RFC3711}}. The DTLS
 negotiation is tied to the offer/answer {{!RFC3264}}
 transaction via an "a=fingerprint" attribute
-{{!RFC4916}} in the SDP {{!RFC4566}}. The
+{{!RFC4572}} in the SDP {{!RFC4566}}. The
 common message flow is shown below (for DTLS 1.2):
 
 
@@ -223,7 +223,20 @@ linkage to the long-term credential (see {{oob-fingerprint}}).
 
 # Attribute Definition
 
+This document defines a new media-level SDP attribute, "a=dtls-message".
+This message is used to contain DTLS messages. The syntax of this attribute
+is:
 
+~~~~
+attribute               =/   dtls-message-attribute
+
+dtls-message-attribute  =    "dtls-message" ":" role SP value
+
+role                    =    "client" / "server"
+
+value                   =    1*(ALPHA / DIGIT / "+" / "/" / "=" )
+                             ; base64 encoded message
+~~~~
 
 # Interactions
 
@@ -237,7 +250,18 @@ linkage to the long-term credential (see {{oob-fingerprint}}).
 
 
 
+# Security Considerations
 
+
+# IANA Considerations
+
+
+-- back
+
+# Acknowledgements
+
+Thanks to Cullen Jennings, Martin Thomson, and Justin Uberti for helpful
+suggestions.
 
 
 
