@@ -53,7 +53,7 @@ common message flow is shown below (for DTLS 1.2):
 |                                                                |
 |   <---------------------------------------------  ClientHello  |
 2                                                                |
-R   ServerHello,                                                 |
+R   ServerHello                                                 |
 T   ServerKeyExchange                                            |
 T   Certificate                                                  2
 |   CertificateRequest                                           R
@@ -83,8 +83,8 @@ to long call setup times.
 This document describes a technique for improving call setup time by
 piggybacking the first round of DTLS messages on the signaling
 messages. This reduces latency by a full round trip for both DTLS 1.2
-and DTLS 1.3 handshakes, and for DTLS 1.3 <xref
-target="I-D.ietf-tls-tls13}} allows the answerer to start sending media
+and DTLS 1.3 handshakes, and for DTLS 1.3 {{!I-D.ietf-tls-tls13}}
+allows the answerer to start sending media
 immediately upon receiving the offer, or, if ICE is used, upon ICE
 completion.
 
@@ -156,7 +156,7 @@ negotiation are not protected. However, in this case because those
 indicators are carried in the hello messages which are now tied to the
 signaling channel, they are authenticated via the same mechanisms
 that authenticate the fingerprint (see {{oob-fingerprint}} for
-more details.
+more details.)
 
 Note: One could argue that under some conditions Bob could do
 False Start in the ordinary handshake, but it's much harder to
@@ -207,7 +207,7 @@ v   <-------------------  Finished
 ~~~~
 {: #piggybacked-dtls13 title="Piggybacked DTLS-SRTP Negotiation (TLS 1.3)"}
      
-Alice cannot send any sooner than with TLS 1.2
+Alice cannot send any sooner than with DTLS 1.2
 because sending at the point when she receives Bob's first
 message is already optimal. However, Bob can shave off yet another
 round trip because he can send immediately upon receiving Alice's
@@ -291,7 +291,7 @@ out the "a=dtls-message" attribute. An alternative would be to add
 another attribute which could be stripped out (this might interact
 better with RTCWEB Identity). Note that {{?RFC4474}} protects against
 any SDP modifications, but I think at this point it's clear that that's
-not practice.
+not practical.
 
 
 ## RTCWEB Identity
@@ -315,6 +315,12 @@ have two major options in this case:
 
 
 # Security Considerations
+
+The security implications of this technique are described throughout
+this document. In addition, we note that with DTLS 1.3 it is
+imperative that the offerer/client use a fresh DH ephemeral for
+each handshake. Otherwise, an attacker will be able to mount
+replay attacks on the handshake.
 
 
 
