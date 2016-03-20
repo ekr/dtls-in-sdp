@@ -1,5 +1,5 @@
 ---
-title: DTLS Handshake in SDP
+title: Piggybacked DTLS Handshakes in SDP
 abbrev: DTLS in SDP
 docname: draft-rescorla-dtls-in-sdp
 category: info
@@ -238,22 +238,108 @@ value                   =    1*(ALPHA / DIGIT / "+" / "/" / "=" )
                              ; base64 encoded message
 ~~~~
 
+An offeror which wishes to use the optimization defined in this document
+shall send his ClientHello in the "a=dtls-message" attribute of its
+initial offer with the role "client" and MUST use "a=setup:actpass". This allows the peer to
+either:
+
+* Reject the optimization, in which case it ignores the attribute.
+* Accept the optimization, in which case it MUST use "a=setup:passive"
+  and send its first flight (starting with ServerHello) and using
+  the role "server" in its response. It MAY also choose to 
+  send its first flight separately in the media channel.
+
+The offerer MUST be able to detect whether an incoming DTLS message
+is a ClientHello or a ServerHello and adapt accordingly.
+
+In subsequent negotiations, implementations MUST maintain these
+roles.
+
+
 # Interactions
+
+This optimization has a number of interactions with existing pieces of
+protocol machinery.
+
 
 ## ICE
 
+When ICE is in use, there is a race condition between the answerer's
+ICE checks (at which point it will be able to send the first flight on
+the media channel) and the answerer's Answer, which contains the first
+flight. For this reason, we allow implementations to send the first
+flight on both channels. However, as a practical matter it is
+reasonably likely that when ICE is in use the Answer will arrive
+first. The reason for this is that if the offerer is behind a NAT with
+any kind of address or port restriction, the answerer's ICE checks
+will be discarded until the offerer sends its own ICE checks, which it
+can only do upon receiving the answer. In this case, although
+a comparison of {{ordinary-dtls}} and {{piggybacked-dtls12}} would
+show the ClientHello (in ordinary DTLS) and the ServerHello
+(when piggybacked) as arriving at the same time, in fact the
+ServerHello may arrive up to a full RTT first, increasing the advantage
+of this technique.
+
+
 ## Forking
+
+This technique does not interact very well with forking. Because each
+ClientHello is only usable for one server, the system must somehow ensure
+that only one of the forks takes up the piggybacked offers. The
+easiest approach is for any intermediary which does a fork to strip
+out the "a=dtls-message" attribute. An alternative would be to add
+another attribute which could be stripped out (this might interact
+better with RTCWEB Identity). Note that {{?RFC4474}} protects against
+any SDP modifications, but I think at this point it's clear that that's
+not practice.
+
 
 ## RTCWEB Identity
 
+RTCWEB Identity assertions need to cover these DTLS messages.
+
+
 ## Out-of-Band Fingerprint Validation {#oob-fingerprint}
 
+DTLS-SRTP supports (but does not require) out of band validation of the
+fingerprint, as well as key continuity. As observed above, if the
+signaling channel alone is used for identity (in order to shave off
+a round trip) then these mechanisms do not work. Implementations
+have two major options in this case:
+
+* Refuse to send data until the complete handshake including a
+  signature is complete. This still offers some performance benefits.
+* Send data immediately but generate an error if the handshake,
+  including a signature, does not complete within some reasonable
+  period (a small number of measured round trips).
 
 
 # Security Considerations
 
 
+
 # IANA Considerations
+
+This specification defines the "identity" SDP attribute per the
+procedures of Section 8.2.4 of {{!RFC4566}}.  The required information
+for the registration is included here:
+
+~~~
+   Contact Name:  Eric Rescorla (ekr@rftm.com)
+
+   Attribute Name:  dtls-message
+
+   Long Form:  dtls-message
+
+   Type of Attribute:  session-level
+
+   Charset Considerations:  This attribute is not subject to the charset
+      attribute.
+
+   Purpose:  This attribute carries piggybacked DTLS message.
+
+   Appropriate Values:  This document
+~~~
 
 
 -- back
