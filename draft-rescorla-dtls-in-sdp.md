@@ -53,7 +53,7 @@ common message flow is shown below (for DTLS 1.2):
 |                                                                |
 |   <---------------------------------------------  ClientHello  |
 2                                                                |
-R   ServerHello                                                 |
+R   ServerHello                                                  |
 T   ServerKeyExchange                                            |
 T   Certificate                                                  2
 |   CertificateRequest                                           R
@@ -326,7 +326,7 @@ replay attacks on the handshake.
 
 # IANA Considerations
 
-This specification defines the "identity" SDP attribute per the
+This specification defines the "dtls-message" SDP attribute per the
 procedures of Section 8.2.4 of {{!RFC4566}}.  The required information
 for the registration is included here:
 
