@@ -248,7 +248,8 @@ either:
   and send its first flight (starting with ServerHello) and using
   the role "server" in its response. These messages are simply serialized
   end-to-end as they would be on the wire. It MAY also choose to 
-  send its first flight separately in the media channel.
+  send its first flight separately in the media channel; DTLS implementations
+  already handle retransmits properly.
 
 The offerer MUST be able to detect whether an incoming DTLS message
 is a ClientHello or a ServerHello and adapt accordingly.
