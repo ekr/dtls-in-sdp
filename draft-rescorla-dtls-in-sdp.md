@@ -246,7 +246,8 @@ either:
 * Reject the optimization, in which case it ignores the attribute.
 * Accept the optimization, in which case it MUST use "a=setup:passive"
   and send its first flight (starting with ServerHello) and using
-  the role "server" in its response. It MAY also choose to 
+  the role "server" in its response. These messages are simply serialized
+  end-to-end as they would be on the wire. It MAY also choose to 
   send its first flight separately in the media channel.
 
 The offerer MUST be able to detect whether an incoming DTLS message
@@ -313,6 +314,9 @@ have two major options in this case:
   including a signature, does not complete within some reasonable
   period (a small number of measured round trips).
 
+# Examples
+
+[we need examples.]
 
 # Security Considerations
 
