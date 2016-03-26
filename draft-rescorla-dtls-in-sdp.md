@@ -39,8 +39,20 @@ are then used to key SRTP {{!RFC3711}}. The DTLS
 negotiation is tied to the offer/answer {{!RFC3264}}
 transaction via an "a=fingerprint" attribute
 {{!RFC4572}} in the SDP {{!RFC4566}}. The
-common message flow is shown below (for DTLS 1.2):
+common message flow is shown below for DTLS 1.2.
 
+This figure and the rest of this document adopt the following
+assumptions about network behavior:
+
+* ICE {{!RFC5245}} is in use but that both endpoints
+  implement endpoint-independent filtering {{!RFC5389}} so
+  that STUN checks succeed immediately.
+
+* Signaling messages take the same time to be delivered
+  as direct messages [this is generally false.]
+
+More detailed diagrams with an accurate vertical scale can
+be found at [TODO].
 
 ~~~~
     Alice                 Signaling Service                 Bob
@@ -50,12 +62,15 @@ common message flow is shown below (for DTLS 1.2):
 |                                                                |
 |                                 <------  Answer + fingerprint  |
 |   <--------  Answer + fingerprint                              |
-|                                                                |
+|   <------------------------------------------------- STUN-REQ  |
+|   STUN-REQ ------------------------------------------------->  |
+|   STUN-RESP------------------------------------------------->  |
 |   <---------------------------------------------  ClientHello  |
-2                                                                |
+|   <------------------------------------------------ STUN-RESP  |
+4                                                                |
 R   ServerHello                                                  |
 T   ServerKeyExchange                                            |
-T   Certificate                                                  2
+T   Certificate                                                  3
 |   CertificateRequest                                           R
 |   ServerHelloDone  ----------------------------------------->  T
 |                                                                T
@@ -63,22 +78,22 @@ T   Certificate                                                  2
 |                                                   Certificate  |
 |                                             CertificateVerify  |
 |                                            [ChangeCipherSpec]  |
-v   <------------------------------------------------  Finished  |
-                                                                 |
-    [ChangeCipherSpec]                                           |
-    Finished ------------------------------------------------->  v
-
-    <------------------------ SRTP --------------------------->
+|   <------------------------------------------------  Finished  |
+|                                                                |
+|   [ChangeCipherSpec]                                           |
+|   Finished ------------------------------------------------->  |
+|   Media ---------------------------------------------------->  v
+v   <------------------------ Media----------------------------
 ~~~~
 {: #ordinary-dtls title="Standard DTLS-SRTP Negotiation"}
 
 In this flow, the earliest that Alice can start sending media is
-after receiving Bob's Finished, after two round trips (if we assume
-that the signaling messages travel as fast as media messages,
-which is generally not true). Similarly, Bob can start sending
-two round trips after receiving Alice's offer, upon receiving
-Alice's Finished. The situation is even worse with ICE, leading
-to long call setup times.
+after receiving Bob's Finished and the earliest Bob can start
+sending media is upon receiving Alice's Finished, and neither
+side can send any DTLS messages until they have had a successful
+STUN check. The result is that in the best case, Alice receives
+media four round trips after sending the offer and Bob receives
+media three round trips after receiving Alice's offer.
 
 This document describes a technique for improving call setup time by
 piggybacking the first round of DTLS messages on the signaling
@@ -109,31 +124,33 @@ the server's first flight (ServerHello...ServerHelloDone for DTLS
 |                                  + ClientHello  ------------>  ^
 |                                                                |
 |                                                        Answer  |
-1                                                 + fingerprint  |
-R                                                 + ServerHello  |
-T                                           + ServerKeyExchange  |
-T                                                 + Certificate  |
+|                                                 + fingerprint  |
+|                                                 + ServerHello  |
+|                                           + ServerKeyExchange  |
+|                                                 + Certificate  |
 |                                          + CertificateRequest  |
 |                                <------------  ServerHelloDone  |
-|                                                                |
-|                           Answer                               1
-|                    + fingerprint                               R
-|                    + ServerHello                               T
+3                                                                |
+T                           Answer                               2
+T                    + fingerprint                               R
+T                    + ServerHello                               T
 |              + ServerKeyExchange                               T
 |                    + Certificate                               |
 |             + CertificateRequest                               |
-v   <------------  ServerHelloDone                               |
-                                                                 |
-    ClientKeyExchange                                            |
-    Certificate                                                  |
-    CertificateVerify                                            |
-    [ChangeCipherSpec]                                           |
-    Finished ------------------------------------------------->  v
-    
-                                             [ChangeCipherSpec]
-    <------------------------------------------------  Finished
-    
-    <------------------------ SRTP --------------------------->
+|   <------------  ServerHelloDone                               |
+|   <------------------------------------------------  STUN-REQ  |
+|   STUN-REQ ------------------------------------------------->  |
+|   STUN-RESP------------------------------------------------->  |
+|   <------------------------------------------------ STUN-RESP  |
+|   ClientKeyExchange                                            |
+|   Certificate                                                  |
+|   CertificateVerify                                            |
+|   [ChangeCipherSpec]                                           |
+|   Finished ------------------------------------------------->  v
+|   Media ---------------------------------------------------->
+|                                            [ChangeCipherSpec]
+|   <------------------------------------------------  Finished
+v   <---------------------------------------------------  Media
 ~~~~
 {: #piggybacked-dtls12 title="Piggybacked DTLS-SRTP Negotiation (TLS 1.2)"}
 
@@ -155,8 +172,7 @@ then extensions such as {{!RFC7301}} indicators and DTLS-SRTP
 negotiation are not protected. However, in this case because those
 indicators are carried in the hello messages which are now tied to the
 signaling channel, they are authenticated via the same mechanisms
-that authenticate the fingerprint (see {{oob-fingerprint}} for
-more details.)
+that authenticate the fingerprint.
 
 Note: One could argue that under some conditions Bob could do
 False Start in the ordinary handshake, but it's much harder to
@@ -178,47 +194,44 @@ on DTLS 1.3.
 |                                 Offer
 |                                  + fingerprint
 |                                  + ClientHello  ------------>  ^
-|                                                                v
-|                                                        Answer  
-|                                                 + fingerprint  
-1                                                 + ServerHello  
-R                                          + CertificateRequest  
-T                                                 + Certificate  
-T                                           + CertificateVerify   
-|                                <-------------------  Finished  
-|                           Answer  
-|                    + fingerprint  
-|                    + ServerHello  
-|             + CertificateRequest  
-|                    + Certificate  
-|              + CertificateVerify   
-v   <-------------------  Finished  
-                                                                 
-    ClientKeyExchange                                            
-    Certificate                                                  
-    CertificateVerify                                            
-    [ChangeCipherSpec]                                           
-    Finished ------------------------------------------------->  
-    
-                                             [ChangeCipherSpec]
-    <------------------------------------------------  Finished
-    
-    <------------------------ SRTP --------------------------->
+|                                                                |
+|                                                        Answer  |
+|                                                 + fingerprint  |
+|                                                 + ServerHello  |
+|                                          + CertificateRequest  |
+|                                                 + Certificate  |
+|                                           + CertificateVerify  |
+|                                <-------------------  Finished  |
+|                           Answer                               |
+3                    + fingerprint                               |
+R                    + ServerHello                               2
+T             + CertificateRequest                               R
+T                    + Certificate                               T
+|              + CertificateVerify                               T
+|   <-------------------  Finished                               |
+|   <------------------------------------------------  STUN-REQ  |
+|   STUN-REQ ------------------------------------------------->  |
+|   STUN-RESP------------------------------------------------->  |
+|   <------------------------------------------------ STUN-RESP  |
+|                                                                |   
+|   ClientKeyExchange                                            |
+|   Certificate                                                  |
+|   CertificateVerify                                            |
+|   [ChangeCipherSpec]                                           |
+|   Finished ------------------------------------------------->  |
+|   Media ---------------------------------------------------->  v
+|                                            [ChangeCipherSpec]
+|   <------------------------------------------------  Finished
+v   <---------------------------------------------------  Media
 ~~~~
 {: #piggybacked-dtls13 title="Piggybacked DTLS-SRTP Negotiation (TLS 1.3)"}
-     
+
+
 Alice cannot send any sooner than with DTLS 1.2
 because sending at the point when she receives Bob's first
-message is already optimal. However, Bob can shave off yet another
-round trip because he can send immediately upon receiving Alice's
-first message. The reason for this is that as long as Alice
-uses a fresh DH ephemeral, then Bob knows (because he can
-trust the signaling service) that Alice's DH ephemeral corresponds
-to Alice and can therefore encrypt under the joint DH shared
-secret without waiting for Alice's CertificateVerify.
-Arguably, we need not even do DTLS client authentication in this
-case, but it is a good idea for protocol consistency and for
-linkage to the long-term credential (see {{oob-fingerprint}}).
+message is already optimal. It may be possible
+for Bob to shave off yet another
+round trip, however. As described in {{server-false-start}}.
 
 
 # Attribute Definition
@@ -272,16 +285,25 @@ the media channel) and the answerer's Answer, which contains the first
 flight. For this reason, we allow implementations to send the first
 flight on both channels. However, as a practical matter it is
 reasonably likely that when ICE is in use the Answer will arrive
-first. The reason for this is that if the offerer is behind a NAT with
-any kind of address or port restriction, the answerer's ICE checks
-will be discarded until the offerer sends its own ICE checks, which it
-can only do upon receiving the answer. In this case, although
-a comparison of {{ordinary-dtls}} and {{piggybacked-dtls12}} would
-show the ClientHello (in ordinary DTLS) and the ServerHello
-(when piggybacked) as arriving at the same time, in fact the
-ServerHello may arrive up to a full RTT first, increasing the advantage
-of this technique.
+first, for two reasons:
 
+* The answerer consumes a full RTT doing a STUN check to verify
+  the path to the offerer (even in the best case where the
+  first STUN check succeeds). Thus, even if the path through
+  the signaling server is twice as expensive as the direct path,
+  there is a reasonable chance that the answer will arrive first.
+  
+* If the offerer is behind a NAT without endpoint-independent
+filtering, the answerer's ICE checks will be discarded until the
+offerer sends its own ICE checks, which it can only do upon receiving
+the answer.
+
+In this case, although a comparison of {{ordinary-dtls}} and
+{{piggybacked-dtls12}} would show the ClientHello (in ordinary DTLS)
+and the ServerHello (when piggybacked) as arriving at the same time,
+in fact the ServerHello may arrive up to a full RTT first, but the
+offerer can SEND its second flight immediately upon its STUN check
+succeeding, which happens first, thus increasing the advantage of this technique.
 
 ## Forking
 
@@ -295,25 +317,10 @@ better with RTCWEB Identity). Note that {{?RFC4474}} protects against
 any SDP modifications, but I think at this point it's clear that that's
 not practical.
 
-
 ## RTCWEB Identity
 
 RTCWEB Identity assertions need to cover these DTLS messages.
 
-
-## Out-of-Band Fingerprint Validation {#oob-fingerprint}
-
-DTLS-SRTP supports (but does not require) out of band validation of the
-fingerprint, as well as key continuity. As observed above, if the
-signaling channel alone is used for identity (in order to shave off
-a round trip) then these mechanisms do not work. Implementations
-have two major options in this case:
-
-* Refuse to send data until the complete handshake including a
-  signature is complete. This still offers some performance benefits.
-* Send data immediately but generate an error if the handshake,
-  including a signature, does not complete within some reasonable
-  period (a small number of measured round trips).
 
 # Examples
 
@@ -322,11 +329,7 @@ have two major options in this case:
 # Security Considerations
 
 The security implications of this technique are described throughout
-this document. In addition, we note that with DTLS 1.3 it is
-imperative that the offerer/client use a fresh DH ephemeral for
-each handshake. Otherwise, an attacker will be able to mount
-replay attacks on the handshake.
-
+this document. 
 
 
 # IANA Considerations
@@ -352,8 +355,71 @@ for the registration is included here:
    Appropriate Values:  This document
 ~~~
 
+--- back
 
--- back
+# Speculative: Server False-Start {#server-false-start}
+
+WARNING: THE FOLLOWING SECTION HAS NOT RECEIVED ANY REAL SECURITY
+REVIEW AND MAY BE A REALLY BAD IDEA.
+
+It has been observed that as if Alice uses a fresh DH ephemeral, then Bob knows (because he can
+trust the signaling service) that Alice's DH ephemeral corresponds
+to Alice and can therefore encrypt under the joint DH shared
+secret without waiting for Alice's CertificateVerify, as shown
+in {{piggybacked-dtls13-false-start}}.
+
+~~~~
+    Alice                 Signaling Service                 Bob
+    -----------------------------------------------------------
+^   Offer
+|    + fingerprint
+|    + ClientHello      --------->
+|                                 Offer
+|                                  + fingerprint
+|                                  + ClientHello  ------------>  ^
+|                                                                |
+|                                                        Answer  |
+|                                                 + fingerprint  |
+|                                                 + ServerHello  |
+2                                          + CertificateRequest  |
+R                                                 + Certificate  |
+T                                           + CertificateVerify  |
+T                                <-------------------  Finished  |
+|                           Answer                               |
+|                    + fingerprint                               |
+|                    + ServerHello                               2
+|             + CertificateRequest                               R
+|                    + Certificate                               T
+|              + CertificateVerify                               T
+|   <-------------------  Finished                               |
+|   <------------------------------------------------  STUN-REQ  |
+|   STUN-REQ ------------------------------------------------->  |
+|   STUN-RESP------------------------------------------------->  |
+v   <---------------------------------------------------  Media  |
+    <------------------------------------------------ STUN-RESP  |
+                                                                 |   
+    ClientKeyExchange                                            |
+    Certificate                                                  |
+    CertificateVerify                                            |
+    [ChangeCipherSpec]                                           |
+    Finished ------------------------------------------------->  |
+    Media ---------------------------------------------------->  v
+                                             [ChangeCipherSpec]
+    <------------------------------------------------  Finished
+~~~~
+{: #piggybacked-dtls13-false-start title="Piggybacked DTLS-SRTP Negotiation (TLS 1.3 with false start)"}
+
+This has demonstrably inferior security properties if Alice is
+using a long-term key (for key continuity or fingerprint validation), because Bob has
+not yet verified that Alice controls that key and does not even
+know if Alice is using a fresh DH ephemeral, if implementations
+decide to adopt this optimization, they must do something hacky like
+Send data immediately but generate an error if the handshake,
+including a signature, does not complete within some reasonable
+period (a small number of measured round trips) [Just one reason
+why this is a questionable technique.].
+
+
 
 # Acknowledgements
 

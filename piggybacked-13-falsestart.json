@@ -1,5 +1,5 @@
 {
-    "title":"Piggybacked TLS 1.2",
+    "title":"Piggybacked TLS 1.3",
     "offerer": {
         "START":{
             "report":["starting"],
@@ -24,9 +24,8 @@
             "report":["STUN complete"]
         },
         "answer|STUN-RESP":{
-            "send":["C2:ClientKeyExchange...Finished",
-                "Media"    
-            ]
+            "send":["C2:Certificate...Finished",
+                    "Media"]
         },
         "Media": {
             "tstop":[
@@ -50,11 +49,8 @@
             ]
         },
         "STUN-RESP":{
-            "report":["STUN complete"]
-        },
-        "C2":{
+            "report":["STUN complete"],
             "send":[
-                "S2:Finished",
                 "Media"
             ]
         },
