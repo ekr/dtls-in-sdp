@@ -87,6 +87,8 @@ v   <------------------------ Media----------------------------
 ~~~~
 {: #ordinary-dtls title="Standard DTLS-SRTP Negotiation"}
 
+See: https://raw.githubusercontent.com/ekr/dtls-in-sdp/master/normal-12.png
+
 In this flow, the earliest that Alice can start sending media is
 after receiving Bob's Finished and the earliest Bob can start
 sending media is upon receiving Alice's Finished, and neither
@@ -153,6 +155,8 @@ T                    + ServerHello                               T
 v   <---------------------------------------------------  Media
 ~~~~
 {: #piggybacked-dtls12 title="Piggybacked DTLS-SRTP Negotiation (TLS 1.2)"}
+
+See: https://raw.githubusercontent.com/ekr/dtls-in-sdp/master/piggybacked-12.png
 
 Note that in this flow, the active/passive (DTLS client/server) roles
 are reversed and Alice becomes the client. Because this is a basically
@@ -226,6 +230,7 @@ v   <---------------------------------------------------  Media
 ~~~~
 {: #piggybacked-dtls13 title="Piggybacked DTLS-SRTP Negotiation (TLS 1.3)"}
 
+See: https://raw.githubusercontent.com/ekr/dtls-in-sdp/master/piggybacked-13.png
 
 Alice cannot send any sooner than with DTLS 1.2
 because sending at the point when she receives Bob's first
@@ -408,6 +413,8 @@ v   <---------------------------------------------------  Media  |
     <------------------------------------------------  Finished
 ~~~~
 {: #piggybacked-dtls13-false-start title="Piggybacked DTLS-SRTP Negotiation (TLS 1.3 with false start)"}
+
+See: https://raw.githubusercontent.com/ekr/dtls-in-sdp/master/piggybacked-13-falsestart.png
 
 This has demonstrably inferior security properties if Alice is
 using a long-term key (for key continuity or fingerprint validation), because Bob has
