@@ -51,8 +51,8 @@ assumptions about network behavior:
 * Signaling messages take the same time to be delivered
   as direct messages [this is generally false.]
 
-More detailed diagrams with an accurate vertical scale can
-be found at [TODO].
+Links to detailed diagrams with a more accurate vertical scale can
+be found below each diagram.
 
 ~~~~
     Alice                 Signaling Service                 Bob
@@ -87,7 +87,7 @@ v   <------------------------ Media----------------------------
 ~~~~
 {: #ordinary-dtls title="Standard DTLS-SRTP Negotiation"}
 
-See: https://raw.githubusercontent.com/ekr/dtls-in-sdp/master/normal-12.png
+[Better picture](https://raw.githubusercontent.com/ekr/dtls-in-sdp/master/normal-12.png)
 
 In this flow, the earliest that Alice can start sending media is
 after receiving Bob's Finished and the earliest Bob can start
@@ -156,7 +156,7 @@ v   <---------------------------------------------------  Media
 ~~~~
 {: #piggybacked-dtls12 title="Piggybacked DTLS-SRTP Negotiation (TLS 1.2)"}
 
-See: https://raw.githubusercontent.com/ekr/dtls-in-sdp/master/piggybacked-12.png
+[Better picture](https://raw.githubusercontent.com/ekr/dtls-in-sdp/master/piggybacked-12.png)
 
 Note that in this flow, the active/passive (DTLS client/server) roles
 are reversed and Alice becomes the client. Because this is a basically
@@ -230,7 +230,7 @@ v   <---------------------------------------------------  Media
 ~~~~
 {: #piggybacked-dtls13 title="Piggybacked DTLS-SRTP Negotiation (TLS 1.3)"}
 
-See: https://raw.githubusercontent.com/ekr/dtls-in-sdp/master/piggybacked-13.png
+[Better picture](https://raw.githubusercontent.com/ekr/dtls-in-sdp/master/piggybacked-13.png)
 
 Alice cannot send any sooner than with DTLS 1.2
 because sending at the point when she receives Bob's first
@@ -414,7 +414,7 @@ v   <---------------------------------------------------  Media  |
 ~~~~
 {: #piggybacked-dtls13-false-start title="Piggybacked DTLS-SRTP Negotiation (TLS 1.3 with false start)"}
 
-See: https://raw.githubusercontent.com/ekr/dtls-in-sdp/master/piggybacked-13-falsestart.png
+[Better picture](https://raw.githubusercontent.com/ekr/dtls-in-sdp/master/piggybacked-13-falsestart.png)
 
 This has demonstrably inferior security properties if Alice is
 using a long-term key (for key continuity or fingerprint validation), because Bob has
