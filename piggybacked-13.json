@@ -1,0 +1,68 @@
+{
+    "title":"Piggybacked TLS 1.3",
+    "offerer": {
+        "START":{
+            "report":["starting"],
+            "send":[
+                "offer: Offer + ClientHello"
+            ],
+            "tstart":[
+                "e2e"
+            ]
+        },
+        "answer":{
+            "send":[
+                "STUN-REQ"
+            ]
+        },
+        "STUN-REQ":{
+            "send":[
+                "STUN-RESP"
+            ]
+        },
+        "STUN-RESP":{
+            "report":["STUN complete"]
+        },
+        "answer|STUN-RESP":{
+            "send":["C2:Certificate...Finished",
+                    "Media"]
+        },
+        "Media": {
+            "tstop":[
+                "e2e"
+            ]
+        }
+    },
+    "answerer":{
+        "offer":{
+            "send":[
+                "answer: Answer + ServerHello",
+                "STUN-REQ"
+            ],
+            "tstart":[
+                "e2e"
+            ]
+        },
+        "STUN-REQ":{
+            "send":[
+                "STUN-RESP"
+            ]
+        },
+        "STUN-RESP":{
+            "report":["STUN complete"],
+            "send":[
+            ]
+        },
+        "C2":{
+            "send":[
+                "Media"
+            ]
+        },
+        "Media": {
+            "tstop":[
+                "e2e"
+            ]
+        }        
+    }
+}
+ 
